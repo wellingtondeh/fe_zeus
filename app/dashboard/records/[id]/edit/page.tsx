@@ -4,33 +4,15 @@ import { Suspense } from 'react'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { RecordForm } from '@/components/features/records/record-form'
 import { BreadcrumbWrapper } from '@/components/ui/breadcrumb-wrapper'
-import { type MedicalRecordInput } from '@/types/record'
+import { getSeedRecordById, STATIC_RECORD_IDS } from '@/lib/mock'
 
 export const metadata: Metadata = {
   title: 'Editar Prontuário | Dashboard',
   description: 'Edite o prontuário médico',
 }
 
-// Dados mockados - em produção, viriam de uma API ou banco de dados
-const mockRecords: Record<string, MedicalRecordInput & { id: string }> = {
-  '1': {
-    id: '1',
-    patientId: '1',
-    title: 'Consulta Inicial',
-    content: '<p><strong>Queixa Principal:</strong> Paciente apresentou queixas de dor de cabeça frequente há aproximadamente 2 semanas.</p>',
-  },
-  '2': {
-    id: '2',
-    patientId: '2',
-    title: 'Acompanhamento',
-    content: '<p>Paciente em acompanhamento para tratamento...</p>',
-  },
-  '3': {
-    id: '3',
-    patientId: '1',
-    title: 'Retorno',
-    content: '<p>Paciente retornou para avaliação...</p>',
-  },
+export function generateStaticParams() {
+  return STATIC_RECORD_IDS.map((id) => ({ id }))
 }
 
 interface EditRecordPageProps {
@@ -39,9 +21,9 @@ interface EditRecordPageProps {
 
 export default async function EditRecordPage({ params }: EditRecordPageProps) {
   const { id } = await params
-  const recordData = mockRecords[id]
+  const seed = getSeedRecordById(id)
 
-  if (!recordData) {
+  if (!seed) {
     return (
       <div className="min-h-screen bg-gray-50">
         <DashboardHeader />
@@ -66,16 +48,21 @@ export default async function EditRecordPage({ params }: EditRecordPageProps) {
     )
   }
 
+  const recordData = {
+    id: seed.id,
+    patientId: seed.patientId,
+    title: seed.title,
+    content: seed.content,
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
 
       <main className="px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto lg:max-w-none lg:w-full">
-          {/* Breadcrumb */}
           <BreadcrumbWrapper />
 
-          {/* Formulário */}
           <Suspense fallback={<div className="text-center py-8">Carregando...</div>}>
             <RecordForm initialData={recordData} recordId={id} />
           </Suspense>

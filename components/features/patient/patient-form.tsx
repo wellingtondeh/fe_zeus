@@ -10,6 +10,7 @@ import { applyCepMask, removeCepMask, isValidCepFormat } from '@/lib/utils/cep'
 import { applyCpfMask, removeCpfMask } from '@/lib/utils/cpf'
 import { applyPhoneMask, removePhoneMask } from '@/lib/utils/phone'
 import { isValidEmail } from '@/lib/utils/email'
+import { createPatient, lookupCep, updatePatient } from '@/lib/mock'
 
 type FormState =
   | { status: 'idle' }
@@ -100,29 +101,16 @@ export function PatientForm({ initialData, patientId }: PatientFormProps) {
 
     startTransition(async () => {
       try {
-        const url = patientId
-          ? `/api/patients/${patientId}`
-          : '/api/patients'
-        const method = patientId ? 'PUT' : 'POST'
+        const data = patientId
+          ? await updatePatient(patientId, dataToSubmit)
+          : await createPatient(dataToSubmit)
 
-        const response = await fetch(url, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(dataToSubmit),
-        })
-
-        const data = await response.json()
-
-        if (!response.ok) {
+        if (!data.ok) {
           if (data.issues) {
             const errors: Partial<Record<string, string>> = {}
-            data.issues.forEach(
-              (issue: { field: string; message: string }) => {
-                errors[issue.field] = issue.message
-              }
-            )
+            data.issues.forEach((issue) => {
+              errors[issue.field] = issue.message
+            })
             setFieldErrors(errors)
             setFormState({
               status: 'error',
@@ -249,26 +237,17 @@ export function PatientForm({ initialData, patientId }: PatientFormProps) {
 
     setCepLoading(true)
     try {
-      const response = await fetch(`/api/cep/${cepWithoutMask}`)
-      
-      if (!response.ok) {
-        const errorData = await response.json()
+      const result = await lookupCep(cepWithoutMask)
+
+      if (!result.ok) {
         setFieldErrors((prev) => ({
           ...prev,
-          'endereco.cep': errorData.error || 'Erro ao buscar CEP.',
+          'endereco.cep': result.error || 'Erro ao buscar CEP.',
         }))
         return
       }
 
-      const data = await response.json()
-
-      if (data.erro) {
-        setFieldErrors((prev) => ({
-          ...prev,
-          'endereco.cep': 'CEP não encontrado.',
-        }))
-        return
-      }
+      const data = result.data
 
       // Identificar quais campos foram preenchidos pelo CEP
       const filledFields = new Set<string>()

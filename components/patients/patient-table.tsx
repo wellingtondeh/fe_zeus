@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog } from '@/components/ui/dialog'
 import { type Patient } from '@/types/patient'
+import { deletePatient } from '@/lib/mock'
 
 interface PatientTableProps {
   patients: Patient[]
@@ -602,19 +603,16 @@ function PatientTableContent({ patients, onPatientDeleted }: PatientTableProps) 
                 if (patientToDelete) {
                   setIsDeleting(true)
                   try {
-                    const response = await fetch(`/api/patients/${patientToDelete.id}`, {
-                      method: 'DELETE',
-                    })
+                    const response = await deletePatient(patientToDelete.id)
 
                     if (response.ok) {
-                      // Chamar callback para remover da lista
                       if (onPatientDeleted) {
                         onPatientDeleted(patientToDelete.id)
                       }
                       setDeleteDialogOpen(false)
                       setPatientToDelete(null)
                     } else {
-                      alert('Erro ao excluir paciente')
+                      alert(response.error || 'Erro ao excluir paciente')
                     }
                   } catch (error) {
                     console.error('Erro ao excluir paciente:', error)

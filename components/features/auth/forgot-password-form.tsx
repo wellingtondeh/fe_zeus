@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { forgotPasswordSchema, type ForgotPasswordInput } from '@/lib/validations/auth'
+import { forgotPassword } from '@/lib/mock'
 
 type ForgotPasswordState =
   | { status: 'idle' }
@@ -45,33 +46,17 @@ export function ForgotPasswordForm() {
 
     startTransition(async () => {
       try {
-        const response = await fetch('/api/auth/forgot-password', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(result.data),
-        })
+        const data = await forgotPassword(result.data.email)
 
-        const data = await response.json()
-
-        if (!response.ok) {
-          if (response.status === 429) {
-            setFormState({
-              status: 'error',
-              error: 'Muitas tentativas. Aguarde alguns instantes.',
-            })
-          } else if (data.issues) {
-            // Erros de validação do servidor
+        if (!data.ok) {
+          if (data.issues) {
             const errors: Partial<Record<keyof ForgotPasswordInput, string>> = {}
-            data.issues.forEach(
-              (issue: { field: string; message: string }) => {
-                const field = issue.field as keyof ForgotPasswordInput
-                if (field) {
-                  errors[field] = issue.message
-                }
+            data.issues.forEach((issue) => {
+              const field = issue.field as keyof ForgotPasswordInput
+              if (field) {
+                errors[field] = issue.message
               }
-            )
+            })
             setFieldErrors(errors)
             setFormState({
               status: 'error',
@@ -80,7 +65,9 @@ export function ForgotPasswordForm() {
           } else {
             setFormState({
               status: 'error',
-              error: data.error || 'Erro ao solicitar recuperação de senha. Tente novamente.',
+              error:
+                data.error ||
+                'Erro ao solicitar recuperação de senha. Tente novamente.',
             })
           }
           return

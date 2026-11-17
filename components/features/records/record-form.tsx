@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card'
 import { RichTextEditor } from './rich-text-editor'
 import { RecordFileUpload } from './record-file-upload'
 import { type MedicalRecordInput } from '@/types/record'
+import { createRecord, listPatients, updateRecord } from '@/lib/mock'
 
 type FormState =
   | { status: 'idle' }
@@ -19,15 +20,6 @@ interface RecordFormProps {
   initialData?: MedicalRecordInput & { id?: string }
   recordId?: string
 }
-
-// Dados mockados de pacientes - em produção, viriam de uma API
-const mockPatients = [
-  { id: '1', nome: 'Maria Silva' },
-  { id: '2', nome: 'João Santos' },
-  { id: '3', nome: 'Ana Costa' },
-  { id: '4', nome: 'Pedro Oliveira' },
-  { id: '5', nome: 'Carla Mendes' },
-]
 
 export function RecordForm({ initialData, recordId }: RecordFormProps) {
   const router = useRouter()
@@ -45,6 +37,17 @@ export function RecordForm({ initialData, recordId }: RecordFormProps) {
     Partial<Record<keyof MedicalRecordInput, string>>
   >({})
   const [attachments, setAttachments] = useState<File[]>([])
+  const [mockPatients, setMockPatients] = useState<{ id: string; nome: string }[]>(
+    []
+  )
+
+  useEffect(() => {
+    void listPatients().then((result) => {
+      if (result.ok) {
+        setMockPatients(result.data.map((p) => ({ id: p.id, nome: p.nome })))
+      }
+    })
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -72,34 +75,17 @@ export function RecordForm({ initialData, recordId }: RecordFormProps) {
 
     startTransition(async () => {
       try {
-        const url = recordId
-          ? `/api/records/${recordId}`
-          : '/api/records'
-        const method = recordId ? 'PUT' : 'POST'
-
-        let response: Response
-        if (attachments.length > 0) {
-          const fd = new FormData()
-          fd.append('patientId', formData.patientId)
-          fd.append('title', formData.title)
-          fd.append('content', formData.content)
-          attachments.forEach((file) => {
-            fd.append('attachments', file)
-          })
-          response = await fetch(url, { method, body: fd })
-        } else {
-          response = await fetch(url, {
-            method,
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-          })
+        const payload = {
+          patientId: formData.patientId,
+          title: formData.title,
+          content: formData.content,
+          attachments,
         }
+        const data = recordId
+          ? await updateRecord(recordId, payload)
+          : await createRecord(payload)
 
-        const data = await response.json()
-
-        if (!response.ok) {
+        if (!data.ok) {
           setFormState({
             status: 'error',
             error: data.error || 'Erro ao salvar prontuário. Tente novamente.',
@@ -109,7 +95,6 @@ export function RecordForm({ initialData, recordId }: RecordFormProps) {
 
         setFormState({ status: 'success' })
         setTimeout(() => {
-          // Preservar query params ao redirecionar
           const queryParams = new URLSearchParams()
           const patientId = searchParams.get('patientId')
           const fromArea = searchParams.get('from')

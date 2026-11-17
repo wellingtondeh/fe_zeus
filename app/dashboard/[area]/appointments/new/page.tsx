@@ -6,6 +6,14 @@ import { BreadcrumbWrapper } from '@/components/ui/breadcrumb-wrapper'
 import { AppointmentForm } from '@/components/features/appointments/appointment-form'
 import { type AreaType } from '@/types/dashboard'
 
+const AREAS: AreaType[] = [
+  'pilates',
+  'medico',
+  'fisioterapia',
+  'nutricao',
+  'odontologia',
+]
+
 const areaData: Record<
   AreaType,
   {
@@ -43,7 +51,10 @@ const areaData: Record<
 
 interface NewAppointmentPageProps {
   params: Promise<{ area: string }>
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export function generateStaticParams() {
+  return AREAS.map((area) => ({ area }))
 }
 
 export async function generateMetadata({
@@ -66,10 +77,8 @@ export async function generateMetadata({
 
 export default async function NewAppointmentPage({
   params,
-  searchParams,
 }: NewAppointmentPageProps) {
   const { area } = await params
-  const searchParamsData = await searchParams
   const data = areaData[area as AreaType]
 
   if (!data) {
@@ -82,10 +91,8 @@ export default async function NewAppointmentPage({
 
       <main className="px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-7xl mx-auto">
-          {/* Breadcrumb */}
           <BreadcrumbWrapper />
 
-          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-4">
               <div className={`p-4 rounded-lg ${data.bgColor}`}>
@@ -104,9 +111,8 @@ export default async function NewAppointmentPage({
             </div>
           </div>
 
-          {/* Formulário */}
           <Suspense fallback={<div className="text-center py-8">Carregando...</div>}>
-            <AppointmentForm area={area as AreaType} searchParams={searchParamsData} />
+            <AppointmentForm area={area as AreaType} />
           </Suspense>
         </div>
       </main>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { mobileAppointmentSchema, fixedAppointmentSchema, simpleMobileAppointmentSchema } from '@/lib/validations/appointment'
 import { applyPhoneMask } from '@/lib/utils/phone'
 import { Card } from '@/components/ui/card'
@@ -12,7 +12,6 @@ import { type AreaType } from '@/types/dashboard'
 
 interface AppointmentFormProps {
   area: AreaType
-  searchParams: { [key: string]: string | string[] | undefined }
 }
 
 interface Professional {
@@ -33,18 +32,13 @@ type FixedAppointmentType = 'particular' | 'convenio' | null
 // Tipo para armazenar ocupação: chave = "professionalId-time" ou "professionalId-time-dayIndex"
 type OccupancyMap = Record<string, number>
 
-export function AppointmentForm({ area, searchParams }: AppointmentFormProps) {
+export function AppointmentForm({ area }: AppointmentFormProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   
   // Verificar se é PILATES para mostrar opções de agenda fixa/móvel
   const isPilates = area === 'pilates'
-  const fromQuery = searchParams.from
-  const fromParam =
-    typeof fromQuery === 'string'
-      ? fromQuery
-      : Array.isArray(fromQuery)
-        ? fromQuery[0]
-        : undefined
+  const fromParam = searchParams.get('from') ?? undefined
   /** Textos de capacidade: alunos (Pilates / from=pilates) vs pacientes (demais rotas) */
   const useAlunosCapacityWording = isPilates || fromParam === 'pilates'
   
@@ -566,7 +560,8 @@ export function AppointmentForm({ area, searchParams }: AppointmentFormProps) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // Redirecionar de volta para a área
-      const fromParam = searchParams.from ? `?from=${searchParams.from}` : ''
+      const fromQuery = searchParams.get('from')
+      const fromParam = fromQuery ? `?from=${fromQuery}` : ''
       router.push(`/dashboard/${area}${fromParam}`)
     } catch (err) {
       setError('Erro ao criar agendamento. Tente novamente.')
@@ -1620,7 +1615,9 @@ export function AppointmentForm({ area, searchParams }: AppointmentFormProps) {
               type="button"
               variant="outline"
               onClick={() => {
-                const fromParam = searchParams.from ? `?from=${searchParams.from}` : ''
+                const fromParam = searchParams.get('from')
+                  ? `?from=${searchParams.get('from')}`
+                  : ''
                 router.push(`/dashboard/${area}${fromParam}`)
               }}
             >

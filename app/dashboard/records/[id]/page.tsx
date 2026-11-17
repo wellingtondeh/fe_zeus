@@ -5,46 +5,16 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { BreadcrumbWrapper } from '@/components/ui/breadcrumb-wrapper'
-import { type MedicalRecord } from '@/types/record'
 import { EditRecordButton } from '@/components/features/records/edit-record-button'
+import { getSeedRecordById, STATIC_RECORD_IDS } from '@/lib/mock'
 
 export const metadata: Metadata = {
   title: 'Visualizar Prontuário | Dashboard',
   description: 'Visualize os detalhes do prontuário médico',
 }
 
-// Dados mockados - em produção, viriam de uma API ou banco de dados
-const mockRecords: Record<string, MedicalRecord> = {
-  '1': {
-    id: '1',
-    patientId: '1',
-    patientName: 'Maria Silva',
-    title: 'Consulta Inicial',
-    content: '<p><strong>Queixa Principal:</strong> Paciente apresentou queixas de dor de cabeça frequente há aproximadamente 2 semanas.</p><p><em>História Clínica:</em> Paciente relata que a dor é pulsátil, principalmente na região frontal, piora com esforço físico e melhora com repouso.</p><p><u>Exame Físico:</u></p><ul><li>PA: 120/80 mmHg</li><li>FC: 72 bpm</li><li>Estado geral: bom</li></ul><p><img src="https://via.placeholder.com/400x200" alt="Exame" /></p>',
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z',
-    createdBy: 'Dr. João',
-  },
-  '2': {
-    id: '2',
-    patientId: '2',
-    patientName: 'João Santos',
-    title: 'Acompanhamento',
-    content: '<p>Paciente em acompanhamento para tratamento...</p>',
-    createdAt: '2024-01-16T14:30:00Z',
-    updatedAt: '2024-01-16T14:30:00Z',
-    createdBy: 'Dr. Maria',
-  },
-  '3': {
-    id: '3',
-    patientId: '1',
-    patientName: 'Maria Silva',
-    title: 'Retorno',
-    content: '<p>Paciente retornou para avaliação...</p>',
-    createdAt: '2024-01-20T09:15:00Z',
-    updatedAt: '2024-01-20T09:15:00Z',
-    createdBy: 'Dr. João',
-  },
+export function generateStaticParams() {
+  return STATIC_RECORD_IDS.map((id) => ({ id }))
 }
 
 function formatDate(dateString: string): string {
@@ -64,7 +34,7 @@ interface ViewRecordPageProps {
 
 export default async function ViewRecordPage({ params }: ViewRecordPageProps) {
   const { id } = await params
-  const record = mockRecords[id]
+  const record = getSeedRecordById(id)
 
   if (!record) {
     return (

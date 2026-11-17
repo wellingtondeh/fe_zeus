@@ -1,4 +1,8 @@
 node_modules
 dist
+out
+.next
 *.local
 .DS_Store
+.env
+.env.local

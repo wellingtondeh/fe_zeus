@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Divider } from '@/components/ui/divider'
 import { loginSchema, type LoginInput } from '@/lib/validations/auth'
+import { login, startSso, type SsoProvider } from '@/lib/mock'
 
 type LoginState =
   | { status: 'idle' }
@@ -75,33 +76,17 @@ export function LoginForm() {
 
     startTransition(async () => {
       try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(result.data),
-        })
+        const data = await login(result.data.email, result.data.password)
 
-        const data = await response.json()
-
-        if (!response.ok) {
-          if (response.status === 429) {
-            setFormState({
-              status: 'error',
-              error: 'Muitas tentativas. Aguarde alguns instantes.',
-            })
-          } else if (data.issues) {
-            // Erros de validação do servidor
+        if (!data.ok) {
+          if (data.issues) {
             const errors: Partial<Record<keyof LoginInput, string>> = {}
-            data.issues.forEach(
-              (issue: { field: string; message: string }) => {
-                const field = issue.field as keyof LoginInput
-                if (field) {
-                  errors[field] = issue.message
-                }
+            data.issues.forEach((issue) => {
+              const field = issue.field as keyof LoginInput
+              if (field) {
+                errors[field] = issue.message
               }
-            )
+            })
             setFieldErrors(errors)
             setFormState({
               status: 'error',
@@ -116,7 +101,6 @@ export function LoginForm() {
           return
         }
 
-        // Redirecionar após login bem-sucedido (sem setar success para evitar conflito com mensagem de cadastro)
         router.push('/dashboard')
       } catch (error) {
         console.error('Erro ao fazer login:', error)
@@ -146,9 +130,9 @@ export function LoginForm() {
     }
   }
 
-  const handleSSO = (provider: 'google' | 'microsoft' | 'facebook' | 'instagram') => {
+  const handleSSO = (provider: SsoProvider) => {
     setSsoLoading(provider)
-    window.location.href = `/api/auth/sso/${provider}`
+    startSso(provider)
   }
 
   const isLoading = isPending || formState.status === 'loading'

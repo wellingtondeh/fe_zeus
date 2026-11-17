@@ -9,99 +9,18 @@ import { type PatientInput } from '@/lib/validations/patient'
 import { applyCepMask } from '@/lib/utils/cep'
 import { applyCpfMask } from '@/lib/utils/cpf'
 import { applyPhoneMask } from '@/lib/utils/phone'
+import {
+  getSeedPatientById,
+  STATIC_PATIENT_IDS,
+} from '@/lib/mock'
 
 export const metadata: Metadata = {
   title: 'Editar Paciente | Dashboard',
   description: 'Edite os dados do paciente',
 }
 
-// Dados mockados - em produção, viriam de uma API ou banco de dados
-const mockPatients: Record<string, PatientInput> = {
-  '1': {
-    nome: 'Maria Silva',
-    email: 'maria.silva@email.com',
-    telefone: '11987654321',
-    cpf: '12345678901',
-    dataNascimento: '1985-05-15',
-    sexo: 'F',
-    endereco: {
-      cep: '01310-100',
-      rua: 'Avenida Paulista',
-      numero: '1000',
-      complemento: 'Apto 101',
-      bairro: 'Bela Vista',
-      cidade: 'São Paulo',
-      estado: 'SP',
-    },
-    observacoes: '',
-  },
-  '2': {
-    nome: 'João Santos',
-    email: 'joao.santos@email.com',
-    telefone: '11976543210',
-    cpf: '98765432100',
-    dataNascimento: '1990-08-20',
-    sexo: 'M',
-    endereco: {
-      cep: '02013-000',
-      rua: 'Rua das Flores',
-      numero: '250',
-      bairro: 'Santana',
-      cidade: 'São Paulo',
-      estado: 'SP',
-    },
-    observacoes: '',
-  },
-  '3': {
-    nome: 'Ana Costa',
-    email: 'ana.costa@email.com',
-    telefone: '11965432109',
-    cpf: '11122233344',
-    dataNascimento: '1992-12-10',
-    sexo: 'F',
-    endereco: {
-      cep: '04038-001',
-      rua: 'Avenida Brigadeiro Faria Lima',
-      numero: '1500',
-      complemento: 'Sala 205',
-      bairro: 'Jardim Paulistano',
-      cidade: 'São Paulo',
-      estado: 'SP',
-    },
-    observacoes: '',
-  },
-  '4': {
-    nome: 'Pedro Oliveira',
-    telefone: '11954321098',
-    dataNascimento: '1988-03-25',
-    sexo: 'M',
-    endereco: {
-      cep: '01310-100',
-      rua: 'Rua Augusta',
-      numero: '500',
-      bairro: 'Consolação',
-      cidade: 'São Paulo',
-      estado: 'SP',
-    },
-    observacoes: '',
-  },
-  '5': {
-    nome: 'Carla Mendes',
-    email: 'carla.mendes@email.com',
-    telefone: '11943210987',
-    cpf: '55566677788',
-    dataNascimento: '1995-07-08',
-    sexo: 'F',
-    endereco: {
-      cep: '05015-000',
-      rua: 'Rua dos Três Irmãos',
-      numero: '100',
-      bairro: 'Vila Progredior',
-      cidade: 'São Paulo',
-      estado: 'SP',
-    },
-    observacoes: '',
-  },
+export function generateStaticParams() {
+  return STATIC_PATIENT_IDS.map((id) => ({ id }))
 }
 
 interface EditPatientPageProps {
@@ -110,7 +29,7 @@ interface EditPatientPageProps {
 
 export default async function EditPatientPage({ params }: EditPatientPageProps) {
   const { id } = await params
-  const patientData = mockPatients[id]
+  const patientData = getSeedPatientById(id)
 
   if (!patientData) {
     return (
@@ -137,9 +56,9 @@ export default async function EditPatientPage({ params }: EditPatientPageProps) 
     )
   }
 
-  // Preparar dados com máscaras aplicadas
+  const { id: _patientId, ...patientFields } = patientData
   const initialData: PatientInput = {
-    ...patientData,
+    ...patientFields,
     telefone: applyPhoneMask(patientData.telefone),
     cpf: patientData.cpf ? applyCpfMask(patientData.cpf) : '',
     endereco: {
@@ -156,10 +75,8 @@ export default async function EditPatientPage({ params }: EditPatientPageProps) 
 
       <main className="px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto lg:max-w-none lg:w-full">
-          {/* Breadcrumb */}
           <BreadcrumbWrapper />
 
-          {/* Botão Prontuários */}
           <div className="mb-6 flex justify-end">
             <Link href={`/dashboard/records?patientId=${id}`}>
               <Button variant="outline" className="flex items-center gap-2">
@@ -182,7 +99,6 @@ export default async function EditPatientPage({ params }: EditPatientPageProps) 
             </Link>
           </div>
 
-          {/* Formulário */}
           <PatientForm initialData={initialData} patientId={id} />
         </div>
       </main>

@@ -2,56 +2,14 @@
 
 import { useState, useMemo, Suspense, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { BreadcrumbWrapper } from '@/components/ui/breadcrumb-wrapper'
 import { DeleteRecordDialog } from '@/components/features/records/delete-record-dialog'
 import { type MedicalRecord } from '@/types/record'
-
-// Dados mockados - em produção, viriam de uma API ou banco de dados
-const mockRecords: MedicalRecord[] = [
-  {
-    id: '1',
-    patientId: '1',
-    patientName: 'Maria Silva',
-    title: 'Consulta Inicial',
-    content: '<p>Paciente apresentou queixas de dor de cabeça...</p>',
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z',
-    createdBy: 'Dr. João',
-  },
-  {
-    id: '2',
-    patientId: '2',
-    patientName: 'João Santos',
-    title: 'Acompanhamento',
-    content: '<p>Paciente em acompanhamento para tratamento...</p>',
-    createdAt: '2024-01-16T14:30:00Z',
-    updatedAt: '2024-01-16T14:30:00Z',
-    createdBy: 'Dr. Maria',
-  },
-  {
-    id: '3',
-    patientId: '1',
-    patientName: 'Maria Silva',
-    title: 'Retorno',
-    content: '<p>Paciente retornou para avaliação...</p>',
-    createdAt: '2024-01-20T09:15:00Z',
-    updatedAt: '2024-01-20T09:15:00Z',
-    createdBy: 'Dr. João',
-  },
-]
-
-// Dados mockados de pacientes para buscar o nome quando filtrar
-const mockPatients: Record<string, string> = {
-  '1': 'Maria Silva',
-  '2': 'João Santos',
-  '3': 'Ana Costa',
-  '4': 'Pedro Oliveira',
-  '5': 'Carla Mendes',
-}
+import { deleteRecord, getPatients, getRecords } from '@/lib/mock'
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
@@ -65,11 +23,21 @@ function formatDate(dateString: string): string {
 }
 
 function RecordsContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const patientId = searchParams.get('patientId')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [recordToDelete, setRecordToDelete] = useState<MedicalRecord | null>(null)
+  const [records, setRecords] = useState<MedicalRecord[]>([])
+  const [patientNames, setPatientNames] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    setRecords(getRecords())
+    const names: Record<string, string> = {}
+    for (const patient of getPatients()) {
+      names[patient.id] = patient.nome
+    }
+    setPatientNames(names)
+  }, [])
 
   // Garantir que os query params sejam preservados na URL após refresh
   useEffect(() => {
@@ -82,35 +50,27 @@ function RecordsContent() {
     }
   }, [patientId])
 
-  // Filtrar prontuários por paciente se patientId estiver presente
   const filteredRecords = useMemo(() => {
     if (!patientId) {
-      return mockRecords
+      return records
     }
-    return mockRecords.filter((record) => record.patientId === patientId)
-  }, [patientId])
+    return records.filter((record) => record.patientId === patientId)
+  }, [patientId, records])
 
-  // Obter nome do paciente quando filtrado
-  const filteredPatientName = patientId ? mockPatients[patientId] : null
+  const filteredPatientName = patientId ? patientNames[patientId] ?? null : null
 
   const handleDelete = async () => {
     if (!recordToDelete) return
 
     try {
-      const response = await fetch(`/api/records/${recordToDelete.id}`, {
-        method: 'DELETE',
-      })
+      const response = await deleteRecord(recordToDelete.id)
 
       if (response.ok) {
-        // Preservar o filtro de paciente ao recarregar
-        const currentUrl = patientId 
-          ? `/dashboard/records?patientId=${patientId}`
-          : '/dashboard/records'
-        router.push(currentUrl)
+        setRecords(getRecords())
         setDeleteDialogOpen(false)
         setRecordToDelete(null)
       } else {
-        alert('Erro ao excluir prontuário')
+        alert(response.error || 'Erro ao excluir prontuário')
       }
     } catch (error) {
       console.error('Erro ao excluir prontuário:', error)

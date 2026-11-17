@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card'
 import { registerSchema, type RegisterInput } from '@/lib/validations/auth'
 import { applyCpfMask } from '@/lib/utils/cpf'
 import { applyCnpjMask } from '@/lib/utils/cnpj'
+import { register } from '@/lib/mock'
 
 type RegisterState =
   | { status: 'idle' }
@@ -54,33 +55,17 @@ export function RegisterForm() {
 
     startTransition(async () => {
       try {
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(result.data),
-        })
+        const data = await register(result.data)
 
-        const data = await response.json()
-
-        if (!response.ok) {
-          if (response.status === 429) {
-            setFormState({
-              status: 'error',
-              error: 'Muitas tentativas. Aguarde alguns instantes.',
-            })
-          } else if (data.issues) {
-            // Erros de validação do servidor
+        if (!data.ok) {
+          if (data.issues) {
             const errors: Partial<Record<keyof RegisterInput, string>> = {}
-            data.issues.forEach(
-              (issue: { field: string; message: string }) => {
-                const field = issue.field as keyof RegisterInput
-                if (field) {
-                  errors[field] = issue.message
-                }
+            data.issues.forEach((issue) => {
+              const field = issue.field as keyof RegisterInput
+              if (field) {
+                errors[field] = issue.message
               }
-            )
+            })
             setFieldErrors(errors)
             setFormState({
               status: 'error',
@@ -96,7 +81,6 @@ export function RegisterForm() {
         }
 
         setFormState({ status: 'success' })
-        // Redirecionar após cadastro bem-sucedido
         router.push('/login?registered=true')
       } catch (error) {
         console.error('Erro ao criar conta:', error)

@@ -54,6 +54,18 @@ const areaData: Record<
   },
 }
 
+const AREAS: AreaType[] = [
+  'pilates',
+  'medico',
+  'fisioterapia',
+  'nutricao',
+  'odontologia',
+]
+
+export function generateStaticParams() {
+  return AREAS.map((area) => ({ area }))
+}
+
 interface AreaPageProps {
   params: Promise<{ area: string }>
 }

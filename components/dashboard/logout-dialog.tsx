@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { Dialog } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { logout } from '@/lib/mock'
 
 interface LogoutDialogProps {
   open: boolean
@@ -13,12 +14,7 @@ export function LogoutDialog({ open, onOpenChange }: LogoutDialogProps) {
   const router = useRouter()
 
   const handleLogout = () => {
-    // TODO: Implementar lógica de logout real
-    // - Limpar tokens/cookies
-    // - Invalidar sessão no servidor
-    // - Limpar estado do cliente
-    
-    // Por enquanto, apenas redireciona
+    logout()
     router.push('/login')
   }
 
