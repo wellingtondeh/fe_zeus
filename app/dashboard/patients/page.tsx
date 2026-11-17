@@ -9,11 +9,32 @@ import { getPatients } from '@/lib/mock'
 
 function toPatientList(): Patient[] {
   const now = new Date().toISOString()
-  return getPatients().map((p) => ({
-    ...p,
-    createdAt: now,
-    updatedAt: now,
-  }))
+  return getPatients().map((p) => {
+    const patient: Patient = {
+      id: p.id,
+      nome: p.nome,
+      telefone: p.telefone,
+      dataNascimento: p.dataNascimento,
+      sexo: p.sexo,
+      endereco: {
+        rua: p.endereco.rua,
+        numero: p.endereco.numero,
+        bairro: p.endereco.bairro,
+        cidade: p.endereco.cidade,
+        estado: p.endereco.estado,
+        ...(p.endereco.cep ? { cep: p.endereco.cep } : {}),
+        ...(p.endereco.complemento
+          ? { complemento: p.endereco.complemento }
+          : {}),
+      },
+      createdAt: now,
+      updatedAt: now,
+    }
+    if (p.email) patient.email = p.email
+    if (p.cpf) patient.cpf = p.cpf
+    if (p.observacoes) patient.observacoes = p.observacoes
+    return patient
+  })
 }
 
 export default function PatientsPage() {

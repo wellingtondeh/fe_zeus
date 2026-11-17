@@ -261,12 +261,12 @@ export function PatientForm({ initialData, patientId }: PatientFormProps) {
         ...prev,
         endereco: {
           ...prev.endereco,
-          cep: applyCepMask(data.cep || prev.endereco.cep),
+          cep: applyCepMask(data.cep || prev.endereco.cep || ''),
           rua: data.logradouro || prev.endereco.rua,
           bairro: data.bairro || prev.endereco.bairro,
           cidade: data.localidade || prev.endereco.cidade,
           estado: data.uf || prev.endereco.estado,
-          complemento: data.complemento || prev.endereco.complemento,
+          complemento: data.complemento || prev.endereco.complemento || '',
         },
       }))
 
